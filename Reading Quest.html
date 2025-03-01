@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Quest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
+
+        :root {
+            --primary-color: #5D5CDE;
+            --accent-color: #FF7E5F;
+            --success-color: #4CAF50;
+            --danger-color: #F44336;
+            --warning-color: #FFC107;
+            --border-radius: 8px;
+            --transition-speed: 0.3s;
+            
+            /* Light mode colors */
+            --bg-color-light: #FFFFFF;
+            --text-color-light: #333333;
+            --card-bg-light: #F5F7FA;
+            --border-color-light: #E2E8F0;
+            
+            /* Dark mode colors */
+            --bg-color-dark: #181818;
+            --text-color-dark: #E0E0E0;
+            --card-bg-dark: #2D2D2D;
+            --border-color-dark: #3D3D3D;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+        }
+
+        .font-medieval {
+            font-family: 'MedievalSharp', cursive;
+        }
+
+        .card {
+            border-radius: var(--border-radius);
+            transition: all var(--transition-speed);
+        }
+
+        .btn {
+            transition: all var(--transition-speed);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .dice {
+            transition: transform 0.8s ease-out;
+        }
+
+        .dice-rolling {
+            transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg);
+        }
+
+        .monster-container {
+            min-height: 160px;
+            position: relative;
+        }
+
+        .monster-sprite {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: transform 0.3s ease;
+        }
+
+        .monster-hit {
+            animation: hit 0.5s ease;
+        }
+
+        @keyframes hit {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        .damage-text {
+            position: absolute;
+            animation: float-up 1s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes float-up {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+        /* Progress bar animation */
+        @keyframes progress-fill {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+
+        .progress-fill {
+            animation: progress-fill 0.5s ease-out forwards;
+        }
+
+        /* Dark mode media query */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--bg-color-dark);
+                color: var(--text-color-dark);
+            }
+            .card {
+                background-color: var(--card-bg-dark);
+                border-color: var(--border-color-dark);
+            }
+            .text-gray-700 {
+                color: var(--text-color-dark);
+            }
+            .bg-white {
+                background-color: var(--card-bg-dark);
+            }
+            .border-gray-200 {
+                border-color: var(--border-color-dark);
+            }
+            input, select, textarea {
+                background-color: var(--card-bg-dark);
+                color: var(--text-color-dark);
+                border-color: var(--border-color-dark);
+            }
+        }
+
+        /* Light mode */
+        @media (prefers-color-scheme: light) {
+            body {
+                background-color: var(--bg-color-light);
+                color: var(--text-color-light);
+            }
+            .card {
+                background-color: var(--card-bg-light);
+                border-color: var(--border-color-light);
+            }
+            .text-gray-700 {
+                color: var(--text-color-light);
+            }
+            .bg-white {
+                background-color: var(--bg-color-light);
+            }
+            .border-gray-200 {
+                border-color: var(--border-color-light);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+    <div class="container mx-auto max-w-3xl">
+        <!-- Header -->
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-primary-600 font-medieval">
+                <i class="fas fa-book-open mr-2"></i>Reading Quest
+            </h1>
+            <p class="text-sm opacity-75">Defeat monsters by reading books!</p>
+        </header>
+
+        <!-- Main Content Tabs -->
+        <div class="mb-4">
+            <nav class="flex border-b border-gray-200">
+                <button id="tab-daily" class="px-4 py-2 font-medium text-primary-600 border-b-2 border-primary-600 active-tab">
+                    Daily
+                </button>
+                <button id="tab-stats" class="px-4 py-2 font-medium text-gray-500 hover:text-primary-600">
+                    Stats
+                </button>
+                <button id="tab-monsters" class="px-4 py-2 font-medium text-gray-500 hover:text-primary-600">
+                    Monsters
+                </button>
+                <button id="tab-shop" class="px-4 py-2 font-medium text-gray-500 hover:text-primary-600">
+                    Shop
+                </button>
+                <button id="tab-settings" class="px-4 py-2 font-medium text-gray-500 hover:text-primary-600">
+                    Settings
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tab-contents">
+
+            <!-- Daily Tab -->
+            <div id="content-daily" class="tab-content">
+                <!-- Date and Streak -->
+                <div class="flex justify-between items-center mb-4">
+                    <div class="text-lg" id="current-date"></div>
+                    <div class="flex items-center">
+                        <i class="fas fa-fire text-amber-500 mr-1"></i>
+                        <span id="streak-display">Streak: 0</span>
+                    </div>
+                </div>
+
+                <!-- Monster Battle Card -->
+                <div class="card bg-white shadow-md rounded-lg p-4 mb-6 border border-gray-200">
+                    <h2 class="text-xl font-medieval text-center mb-2" id="monster-name">Monster Name</h2>
+                    
+                    <!-- Monster HP Bar -->
+                    <div class="mb-3">
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>HP</span>
+                            <span id="monster-hp-text">0/0</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                            <div id="monster-hp-bar" class="bg-red-500 h-4 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Monster Display -->
+                    <div class="monster-container flex justify-center items-center mb-4">
+                        <div id="monster-sprite" class="monster-sprite"></div>
+                    </div>
+                    
+                    <!-- Monster Traits -->
+                    <div class="text-center mb-4">
+                        <div id="monster-traits" class="text-sm italic"></div>
+                    </div>
+
+                    <!-- Weapon Display -->
+                    <div class="flex justify-center items-center mb-4">
+                        <div class="text-center">
+                            <div id="weapon-display" class="text-lg mb-1">
+                                <i class="fas fa-sword text-primary-600"></i> Basic Sword (1d6)
+                            </div>
+                            <div>
+                                <span id="dice-display" class="inline-block dice bg-primary-600 text-white w-10 h-10 rounded-lg flex items-center justify-center text-xl">
+                                    <i class="fas fa-dice-d6"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Reading Form -->
+                <div class="card bg-white shadow-md rounded-lg p-4 mb-6 border border-gray-200">
+                    <h2 class="text-xl font-medium mb-4">Today's Reading</h2>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">
+                            Daily Target: <span id="daily-target" class="font-medium">10</span> pages
+                        </label>
+                        <div class="flex items-center">
+                            <input type="number" id="pages-read" class="w-full p-2 border border-gray-300 rounded-md text-base" placeholder="Pages read today">
+                            <button id="log-reading" class="ml-2 bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex-shrink-0">
+                                Log
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Status Display -->
+                    <div id="status-display" class="mb-4 hidden">
+                        <div class="p-3 bg-green-100 text-green-700 rounded-md mb-2">
+                            <span id="status-message"></span>
+                        </div>
+                    </div>
+
+                    <!-- Buffer Use -->
+                    <div id="buffer-use-container" class="mb-4 hidden">
+                        <button id="use-buffer" class="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                            Use Buffer (0 pages available)
+                        </button>
+                    </div>
+
+                    <!-- Free Pass Use -->
+                    <div id="free-pass-container" class="mb-4 hidden">
+                        <button id="use-free-pass" class="w-full bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600">
+                            Use Free Pass (1 available)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Log -->
+                <div class="card bg-white shadow-md rounded-lg p-4 border border-gray-200">
+                    <h2 class="text-xl font-medium mb-2">Activity Log</h2>
+                    <div id="action-log" class="text-sm max-h-40 overflow-y-auto">
+                        <div class="py-1 border-b border-gray-100">Welcome to Reading Quest! Start reading to battle monsters.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Tab -->
+            <div id="content-stats" class="tab-content hidden">
+                <div class="card bg-white shadow-md rounded-lg p-4 mb-6 border border-gray-200">
+                    <h2 class="text-xl font-medium mb-4">Reading Stats</h2>
+                    
+                    <!-- Streak Info -->
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="bg-gray-100 p-3 rounded-md">
+                            <div class="text-sm text-gray-600">Current Streak</div>
+                            <div class="text-xl font-medium"><span id="stats-streak">0</span> / <span id="stats-streak-cycle">10</span></div>
+                        </div>
+                        <div class="bg-gray-100 p-3 rounded-md">
+                            <div class="text-sm text-gray-600">Completed Streaks</div>
+                            <div class="text-xl font-medium" id="stats-completed-streaks">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Buffer Info -->
+                    <div class="bg-gray-100 p-3 rounded-md mb-4">
+                        <div class="flex justify-between">
+                            <div>
+                                <div class="text-sm text-gray-600">Buffer Pages</div>
+                                <div class="text-xl font-medium"><span id="stats-buffer-pages">0</span> / <span id="stats-max-buffer">20</span></div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-600">Buffer Decay</div>
+                                <div class="text-xl font-medium" id="stats-buffer-decay">14 days</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Buffer Uses -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-100 p-3 rounded-md">
+                            <div class="text-sm text-gray-600">Weekly Buffer Uses</div>
+                            <div class="text-xl font-medium"><span id="stats-buffer-uses">0</span> / <span id="stats-max-buffer-uses">2</span></div>
+                        </div>
+                        <div class="bg-gray-100 p-3 rounded-md">
+                            <div class="text-sm text-gray-600">Free Passes</div>
+                            <div class="text-xl font-medium"><span id="stats-free-pass">1</span> / <span id="stats-max-free-pass">1</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reading History -->
+                <div class="card bg-white shadow-md rounded-lg p-4 border border-gray-200">
+                    <h2 class="text-xl font-medium mb-4">Reading History</h2>
+                    <div id="reading-history" class="text-sm max-h-60 overflow-y-auto">
+                        <!-- History entries will be added here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monsters Tab -->
+            <div id="content-monsters" class="tab-content hidden">
+                <div class="card bg-white shadow-md rounded-lg p-4 mb-6 border border-gray-200">
+                    <h2 class="text-xl font-medium mb-2">Current Monster</h2>
+                    <div id="current-monster-details">
+                        <!-- Current monster details will be displayed here -->
+                    </div>
+                </div>
+
+                <div class="card bg-white shadow-md rounded-lg p-4 border border-gray-200">
+                    <h2 class="text-xl font-medium mb-4">Monster Log</h2>
+                    <div id="monster-log" class="space-y-2 max-h-60 overflow-y-auto">
+                        <!-- Monster log entries will be added here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shop Tab -->
+            <div id="content-shop" class="tab-content hidden">
+                <div class="mb-4 flex justify-between items-center">
+                    <h2 class="text-xl font-medieval">Equipment Shop</h2>
+                    <div class="text-amber-500 font-medium">
+                        <i class="fas fa-coins mr-1"></i><span id="gold-display">0</span> Gold
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <!-- Shop items will be added here -->
+                </div>
+
+                <div class="card bg-white shadow-md rounded-lg p-4 border border-gray-200">
+                    <h2 class="text-xl font-medium mb-4">Inventory</h2>
+                    <div id="inventory" class="space-y-2">
+                        <!-- Inventory items will be added here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="content-settings" class="tab-content hidden">
+                <div class="card bg-white shadow-md rounded-lg p-4 mb-6 border border-gray-200">
+                    <h2 class="text-xl font-medium mb-4">Game Settings</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="daily-target-setting">
+                                Daily Reading Target (pages)
+                            </label>
+                            <input type="number" id="daily-target-setting" class="w-full p-2 border border-gray-300 rounded-md text-base" value="10">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 mb-2" for="streak-cycle-setting">
+                                Streak Cycle Length (days)
+                            </label>
+                            <input type="number" id="streak-cycle-setting" class="w-full p-2 border border-gray-300 rounded-md text-base" value="10">
+                        </div>
+                        
+                        <button id="save-settings" class="w-full bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700">
+                            Save Settings
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card bg-white shadow-md rounded-lg p-4 border border-gray-200">
+                    <h2 class="text-xl font-medium mb-4">Prestige</h2>
+                    
+                    <div id="prestige-available" class="hidden">
+                        <p class="mb-4">You have completed 5 streaks and can prestige! Choose one permanent bonus:</p>
+                        
+                        <div class="space-y-2 mb-4">
+                            <label class="flex items-start p-2 border border-gray-200 rounded-md cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="prestige-bonus" value="max-daily-buffer" class="mt-1 mr-2">
+                                <div>
+                                    <div class="font-medium">Max. Daily Buffer +1 page</div>
+                                    <div class="text-sm text-gray-600">Increase your maximum daily buffer by 1 page (caps at +10).</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-start p-2 border border-gray-200 rounded-md cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="prestige-bonus" value="buffer-pages" class="mt-1 mr-2">
+                                <div>
+                                    <div class="font-medium">Buffer Pages +2</div>
+                                    <div class="text-sm text-gray-600">Increase your maximum buffer capacity by 2 pages (caps at +25).</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-start p-2 border border-gray-200 rounded-md cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="prestige-bonus" value="buffer-decay" class="mt-1 mr-2">
+                                <div>
+                                    <div class="font-medium">Buffer Decay -5%</div>
+                                    <div class="text-sm text-gray-600">Reduce buffer decay by 5% (caps at -25% total reduction).</div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <button id="prestige-confirm" class="w-1/2 bg-amber-500 text-white px-4 py-2 rounded-md hover:bg-amber-600">
+                                Prestige
+                            </button>
+                            <button id="prestige-skip" class="w-1/2 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
+                                Skip Prestige
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="prestige-unavailable">
+                        <p>You need to complete 5 streak cycles to prestige. Current progress: <span id="prestige-progress">0</span>/5 streaks completed.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            // Reading stats
+            dailyTarget: 10,
+            streakCounter: 0,
+            streakCycle: 10,
+            completedStreaks: 0,
+            freePass: 1,
+            maxFreePass: 1,
+            bufferPages: 0,
+            maxBuffer: 20,
+            maxDailyBuffer: 5,
+            weeklyBufferUses: 0,
+            maxWeeklyBufferUses: 2,
+            bufferDecayCountdown: 14,
+            
+            // Monster battle
+            currentMonster: null,
+            monstersDefeated: [],
+            
+            // Equipment
+            gold: 0,
+            weapon: {
+                name: 'Basic Sword',
+                damage: '1d6',
+                cost: 0,
+                owned: true,
+                icon: 'fa-sword'
+            },
+            inventory: [],
+            
+            // Prestige bonuses
+            prestigeCount: 0,
+            permanentBonuses: {
+                maxDailyBuffer: 0,
+                maxBuffer: 0,
+                bufferDecayReduction: 0
+            },
+            
+            // Game history
+            readingHistory: [],
+            lastResetDate: null,
+            
+            // Settings
+            settings: {
+                dailyTargetStart: 10,
+                streakCycleLength: 10
+            }
+        };
+
+        // Monster types
+        const monsterTypes = [
+            {
+                name: 'Goblin',
+                baseHP: 8,
+                goldReward: 5,
+                sprite: createMonsterSprite('#7AC74F', 'G'),
+                possibleTraits: ['Swift', 'Weak']
+            },
+            {
+                name: 'Slime',
+                baseHP: 12,
+                goldReward: 8,
+                sprite: createMonsterSprite('#5D8BF4', 'S'),
+                possibleTraits: ['Regenerative', 'Slow']
+            },
+            {
+                name: 'Spider',
+                baseHP: 10,
+                goldReward: 7,
+                sprite: createMonsterSprite('#9C27B0', 'Sp'),
+                possibleTraits: ['Venomous', 'Fragile']
+            },
+            {
+                name: 'Skeleton',
+                baseHP: 15,
+                goldReward: 10,
+                sprite: createMonsterSprite('#AAAAAA', 'Sk'),
+                possibleTraits: ['Tough', 'Brittle']
+            },
+            {
+                name: 'Orc',
+                baseHP: 20,
+                goldReward: 15,
+                sprite: createMonsterSprite('#8BC34A', 'O'),
+                possibleTraits: ['Strong', 'Slow']
+            }
+        ];
+
+        // Monster traits
+        const monsterTraits = {
+            'Swift': 'Attacks the player twice if they miss their daily target.',
+            'Weak': 'Takes 1 extra damage from all attacks.',
+            'Regenerative': 'Heals 1 HP at the start of each day.',
+            'Slow': 'Has a 50% chance to not attack when the player misses their daily target.',
+            'Venomous': '50% chance to reduce the player\'s buffer decay countdown by 1 on a successful hit.',
+            'Fragile': 'Has 25% less HP than normal.',
+            'Tough': 'Reduces all damage taken by 1 (minimum 1).',
+            'Brittle': 'Critical hits do triple damage instead of double.',
+            'Strong': 'Deals 2 damage to buffer pages when attacking.'
+        };
+
+        // Shop items
+        const shopItems = [
+            {
+                name: 'Iron Sword',
+                description: 'Deals 1d8 damage.',
+                type: 'weapon',
+                damage: '1d8',
+                cost: 20,
+                icon: 'fa-sword'
+            },
+            {
+                name: 'Steel Sword',
+                description: 'Deals 1d10 damage.',
+                type: 'weapon',
+                damage: '1d10',
+                cost: 50,
+                icon: 'fa-sword'
+            },
+            {
+                name: 'Magic Bow',
+                description: 'Deals 1d12 damage. 1/6 chance to miss.',
+                type: 'weapon',
+                damage: '1d12',
+                specialEffect: 'miss',
+                cost: 80,
+                icon: 'fa-bow-arrow'
+            },
+            {
+                name: 'Health Potion',
+                description: 'Increases buffer pages by 5 (one-time use).',
+                type: 'consumable',
+                effect: 'buffer',
+                value: 5,
+                cost: 15,
+                icon: 'fa-flask'
+            },
+            {
+                name: 'Strength Potion',
+                description: '+2 to damage rolls for 3 days (one-time use).',
+                type: 'consumable',
+                effect: 'damage',
+                value: 2,
+                duration: 3,
+                cost: 25,
+                icon: 'fa-fire'
+            }
+        ];
+
+        // DOM elements
+        const elements = {
+            currentDate: document.getElementById('current-date'),
+            streakDisplay: document.getElementById('streak-display'),
+            dailyTarget: document.getElementById('daily-target'),
+            pagesRead: document.getElementById('pages-read'),
+            logReading: document.getElementById('log-reading'),
+            statusDisplay: document.getElementById('status-display'),
+            statusMessage: document.getElementById('status-message'),
+            bufferUseContainer: document.getElementById('buffer-use-container'),
+            useBuffer: document.getElementById('use-buffer'),
+            freePassContainer: document.getElementById('free-pass-container'),
+            useFreePass: document.getElementById('use-free-pass'),
+            actionLog: document.getElementById('action-log'),
+            
+            // Monster elements
+            monsterName: document.getElementById('monster-name'),
+            monsterHPText: document.getElementById('monster-hp-text'),
+            monsterHPBar: document.getElementById('monster-hp-bar'),
+            monsterSprite: document.getElementById('monster-sprite'),
+            monsterTraits: document.getElementById('monster-traits'),
+            
+            // Weapon elements
+            weaponDisplay: document.getElementById('weapon-display'),
+            diceDisplay: document.getElementById('dice-display'),
+            
+            // Stats elements
+            statsStreak: document.getElementById('stats-streak'),
+            statsStreakCycle: document.getElementById('stats-streak-cycle'),
+            statsCompletedStreaks: document.getElementById('stats-completed-streaks'),
+            statsBufferPages: document.getElementById('stats-buffer-pages'),
+            statsMaxBuffer: document.getElementById('stats-max-buffer'),
+            statsBufferDecay: document.getElementById('stats-buffer-decay'),
+            statsBufferUses: document.getElementById('stats-buffer-uses'),
+            statsMaxBufferUses: document.getElementById('stats-max-buffer-uses'),
+            statsFreePass: document.getElementById('stats-free-pass'),
+            statsMaxFreePass: document.getElementById('stats-max-free-pass'),
+            readingHistory: document.getElementById('reading-history'),
+            
+            // Monster tab elements
+            currentMonsterDetails: document.getElementById('current-monster-details'),
+            monsterLog: document.getElementById('monster-log'),
+            
+            // Shop elements
+            goldDisplay: document.getElementById('gold-display'),
+            inventory: document.getElementById('inventory'),
+            
+            // Settings elements
+            dailyTargetSetting: document.getElementById('daily-target-setting'),
+            streakCycleSetting: document.getElementById('streak-cycle-setting'),
+            saveSettings: document.getElementById('save-settings'),
+            
+            // Prestige elements
+            prestigeAvailable: document.getElementById('prestige-available'),
+            prestigeUnavailable: document.getElementById('prestige-unavailable'),
+            prestigeProgress: document.getElementById('prestige-progress'),
+            prestigeConfirm: document.getElementById('prestige-confirm'),
+            prestigeSkip: document.getElementById('prestige-skip')
+        };
+
+        // Tab navigation
+        const tabButtons = document.querySelectorAll('[id^="tab-"]');
+        const tabContents = document.querySelectorAll('[id^="content-"]');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all tabs
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('border-primary-600', 'text-primary-600');
+                    btn.classList.add('text-gray-500');
+                });
+                
+                // Hide all tab contents
+                tabContents.forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Get target tab ID
+                const targetId = button.id.replace('tab-', 'content-');
+                
+                // Activate selected tab
+                button.classList.add('border-primary-600', 'text-primary-600');
+                button.classList.remove('text-gray-500');
+                document.getElementById(targetId).classList.remove('hidden');
+            });
+        });
+
+        // Utility functions
+        function formatDate(date) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString(undefined, options);
+        }
+
+        function rollDice(dice) {
+            // Parse dice notation (e.g., "1d6", "2d8")
+            const [count, sides] = dice.split('d').map(Number);
+            let total = 0;
+            
+            for (let i = 0; i < count; i++) {
+                total += Math.floor(Math.random() * sides) + 1;
+            }
+            
+            return total;
+        }
+
+        function animateDiceRoll() {
+            // Animate dice rolling
+            elements.diceDisplay.classList.add('dice-rolling');
+            
+            setTimeout(() => {
+                elements.diceDisplay.classList.remove('dice-rolling');
+            }, 800);
+        }
+
+        function createMonsterSprite(color, letter) {
+            // Function to generate a simple monster sprite using CSS
+            return `
+                <div style="background-color: ${color}; width: 100%; height: 100%; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 24px;">
+                    ${letter}
+                </div>
+            `;
+        }
+
+        function generateMonster() {
+            // Generate a random monster based on player progress
+            const typeIndex = Math.floor(Math.random() * monsterTypes.length);
+            const monsterType = monsterTypes[typeIndex];
+            
+            // Give the monster 1-2 random traits
+            const traitCount = Math.random() < 0.3 ? 2 : 1;
+            const traits = [];
+            
+            for (let i = 0; i < traitCount; i++) {
+                const availableTraits = monsterType.possibleTraits.filter(trait => !traits.includes(trait));
+                if (availableTraits.length > 0) {
+                    const traitIndex = Math.floor(Math.random() * availableTraits.length);
+                    traits.push(availableTraits[traitIndex]);
+                }
+            }
+            
+            // Calculate monster HP
+            let hp = monsterType.baseHP;
+            
+            // Apply trait effects to HP
+            if (traits.includes('Fragile')) {
+                hp = Math.floor(hp * 0.75);
+            }
+            
+            // Scale HP based on player progress
+            const progressScale = 1 + (gameState.completedStreaks * 0.1);
+            hp = Math.floor(hp * progressScale);
+            
+            return {
+                type: monsterType.name,
+                maxHP: hp,
+                currentHP: hp,
+                goldReward: monsterType.goldReward,
+                sprite: monsterType.sprite,
+                traits: traits
+            };
+        }
+
+        function updateMonsterDisplay() {
+            if (!gameState.currentMonster) {
+                gameState.currentMonster = generateMonster();
+            }
+            
+            const monster = gameState.currentMonster;
+            
+            // Update monster info
+            elements.monsterName.textContent = monster.type;
+            elements.monsterHPText.textContent = `${monster.currentHP}/${monster.maxHP}`;
+            elements.monsterHPBar.style.width = `${(monster.currentHP / monster.maxHP) * 100}%`;
+            
+            // Set monster sprite
+            elements.monsterSprite.innerHTML = monster.sprite;
+            
+            // Display traits
+            if (monster.traits.length > 0) {
+                const traitDescriptions = monster.traits.map(trait => {
+                    return `${trait}: ${monsterTraits[trait]}`;
+                });
+                elements.monsterTraits.textContent = traitDescriptions.join(' | ');
+            } else {
+                elements.monsterTraits.textContent = 'No special traits';
+            }
+            
+            // Update detailed monster view
+            updateCurrentMonsterDetails();
+        }
+
+        function updateCurrentMonsterDetails() {
+            if (!gameState.currentMonster) return;
+            
+            const monster = gameState.currentMonster;
+            
+            elements.currentMonsterDetails.innerHTML = `
+                <div class="flex items-center mb-3">
+                    <div class="monster-sprite w-10 h-10 mr-3">${monster.sprite}</div>
+                    <div>
+                        <div class="font-medium">${monster.type}</div>
+                        <div class="text-sm">${monster.currentHP}/${monster.maxHP} HP</div>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <div class="text-sm font-medium">Traits:</div>
+                    <ul class="list-disc pl-5 text-sm">
+                        ${monster.traits.map(trait => `<li>${trait}: ${monsterTraits[trait]}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="text-sm">Reward: ${monster.goldReward} gold</div>
+            `;
+        }
+
+        function updateMonsterLog() {
+            elements.monsterLog.innerHTML = '';
+            
+            if (gameState.monstersDefeated.length === 0) {
+                elements.monsterLog.innerHTML = `<div class="text-center text-gray-500 py-4">No monsters defeated yet</div>`;
+                return;
+            }
+            
+            gameState.monstersDefeated.slice().reverse().forEach(monster => {
+                const monsterEntry = document.createElement('div');
+                monsterEntry.className = 'p-3 border border-gray-200 rounded-md';
+                
+                monsterEntry.innerHTML = `
+                    <div class="flex items-center mb-2">
+                        <div class="monster-sprite w-8 h-8 mr-2">${monster.sprite}</div>
+                        <div>
+                            <div class="font-medium">${monster.type}</div>
+                            <div class="text-xs">${monster.maxHP} HP | ${monster.traits.join(', ') || 'No traits'}</div>
+                        </div>
+                    </div>
+                    <div class="text-xs">Defeated on ${monster.defeatedDate}</div>
+                `;
+                
+                elements.monsterLog.appendChild(monsterEntry);
+            });
+        }
+
+        function updateStats() {
+            elements.statsStreak.textContent = gameState.streakCounter;
+            elements.statsStreakCycle.textContent = gameState.streakCycle;
+            elements.statsCompletedStreaks.textContent = gameState.completedStreaks;
+            elements.statsBufferPages.textContent = gameState.bufferPages;
+            elements.statsMaxBuffer.textContent = gameState.maxBuffer;
+            elements.statsBufferDecay.textContent = `${gameState.bufferDecayCountdown} days`;
+            elements.statsBufferUses.textContent = gameState.weeklyBufferUses;
+            elements.statsMaxBufferUses.textContent = gameState.maxWeeklyBufferUses;
+            elements.statsFreePass.textContent = gameState.freePass;
+            elements.statsMaxFreePass.textContent = gameState.maxFreePass;
+            
+            // Update prestige progress
+            elements.prestigeProgress.textContent = gameState.completedStreaks % 5;
+            
+            // Check if prestige is available
+            if (gameState.completedStreaks >= 5 && gameState.completedStreaks % 5 === 0) {
+                elements.prestigeAvailable.classList.remove('hidden');
+                elements.prestigeUnavailable.classList.add('hidden');
+            } else {
+                elements.prestigeAvailable.classList.add('hidden');
+                elements.prestigeUnavailable.classList.remove('hidden');
+            }
+            
+            // Update streak display on main screen
+            elements.streakDisplay.textContent = `Streak: ${gameState.streakCounter}`;
+            elements.dailyTarget.textContent = gameState.dailyTarget;
+            
+            // Update gold display
+            elements.goldDisplay.textContent = gameState.gold;
+        }
+
+        function updateReadingHistory() {
+            elements.readingHistory.innerHTML = '';
+            
+            if (gameState.readingHistory.length === 0) {
+                elements.readingHistory.innerHTML = `<div class="text-center text-gray-500 py-4">No reading history yet</div>`;
+                return;
+            }
+            
+            gameState.readingHistory.slice().reverse().forEach(entry => {
+                const historyEntry = document.createElement('div');
+                historyEntry.className = 'py-2 border-b border-gray-100';
+                
+                const targetMet = entry.pagesRead >= entry.target ? 'text-green-600' : 'text-red-600';
+                
+                historyEntry.innerHTML = `
+                    <div class="flex justify-between">
+                        <div>${entry.date}</div>
+                        <div class="${targetMet}">${entry.pagesRead}/${entry.target} pages</div>
+                    </div>
+                `;
+                
+                elements.readingHistory.appendChild(historyEntry);
+            });
+        }
+
+        function addToActionLog(message) {
+            const logEntry = document.createElement('div');
+            logEntry.className = 'py-1 border-b border-gray-100';
+            logEntry.textContent = message;
+            elements.actionLog.insertBefore(logEntry, elements.actionLog.firstChild);
+        }
+
+        function showDamageText(amount, isCritical = false) {
+            const damageText = document.createElement('div');
+            damageText.className = 'damage-text font-bold text-2xl';
+            damageText.style.left = `${Math.random() * 80 + 10}%`;
+            damageText.style.top = `${Math.random() * 50 + 25}%`;
+            
+            if (isCritical) {
+                damageText.className += ' text-yellow-500';
+                damageText.textContent = `CRIT! ${amount}`;
+            } else {
+                damageText.className += ' text-red-500';
+                damageText.textContent = amount;
+            }
+            
+            const monsterContainer = document.querySelector('.monster-container');
+            monsterContainer.appendChild(damageText);
+            
+            setTimeout(() => {
+                monsterContainer.removeChild(damageText);
+            }, 1000);
+        }
+
+        function showStatusMessage(message, type = 'success') {
+            elements.statusMessage.textContent = message;
+            elements.statusDisplay.classList.remove('hidden');
+            
+            // Set status type
+            elements.statusDisplay.querySelector('div').className = 
+                type === 'success' ? 'p-3 bg-green-100 text-green-700 rounded-md mb-2' :
+                type === 'warning' ? 'p-3 bg-yellow-100 text-yellow-700 rounded-md mb-2' :
+                'p-3 bg-red-100 text-red-700 rounded-md mb-2';
+                
+            // Hide after 5 seconds
+            setTimeout(() => {
+                elements.statusDisplay.classList.add('hidden');
+            }, 5000);
+        }
+
+        function useBufferPages(amount) {
+            if (gameState.bufferPages < amount) {
+                return false;
+            }
+            
+            gameState.bufferPages -= amount;
+            updateStats();
+            return true;
+        }
+
+        function addBufferPages(amount) {
+            const maxDailyBufferWithBonus = gameState.maxDailyBuffer + gameState.permanentBonuses.maxDailyBuffer;
+            const maxBufferWithBonus = gameState.maxBuffer + gameState.permanentBonuses.maxBuffer;
+            
+            // Limit amount to max daily buffer
+            amount = Math.min(amount, maxDailyBufferWithBonus);
+            
+            // Add to buffer, up to the maximum
+            gameState.bufferPages = Math.min(gameState.bufferPages + amount, maxBufferWithBonus);
+            updateStats();
+            
+            return amount;
+        }
+
+        function attackMonster(pages) {
+            if (!gameState.currentMonster) return;
+            
+            // Calculate damage
+            animateDiceRoll();
+            
+            // Check for critical hit
+            let isCritical = false;
+            let critChance = 0;
+            
+            if (pages >= gameState.dailyTarget * 2) {
+                // 100% exceed target: 2/6 chance for critical
+                critChance = 2/6;
+            } else if (pages >= gameState.dailyTarget * 1.5) {
+                // 50% exceed target: 1/6 chance for critical
+                critChance = 1/6;
+            }
+            
+            // Roll for critical hit
+            if (Math.random() < critChance) {
+                isCritical = true;
+            }
+            
+            // Roll damage
+            let damage = rollDice(gameState.weapon.damage);
+            
+            // Apply critical hit
+            if (isCritical) {
+                if (gameState.currentMonster.traits.includes('Brittle')) {
+                    damage *= 3; // Triple damage for brittle monsters
+                    addToActionLog('CRITICAL HIT! Triple damage due to Brittle monster!');
+                } else {
+                    damage *= 2; // Double damage for normal critical
+                    addToActionLog('CRITICAL HIT! Double damage!');
+                }
+            }
+            
+            // Apply monster traits
+            if (gameState.currentMonster.traits.includes('Weak')) {
+                damage += 1;
+                addToActionLog(`${gameState.currentMonster.type} is Weak and takes 1 extra damage!`);
+            }
+            
+            if (gameState.currentMonster.traits.includes('Tough')) {
+                damage = Math.max(1, damage - 1);
+                addToActionLog(`${gameState.currentMonster.type} is Tough and reduces damage by 1!`);
+            }
+            
+            // Apply damage
+            gameState.currentMonster.currentHP = Math.max(0, gameState.currentMonster.currentHP - damage);
+            
+            // Show damage animation
+            elements.monsterSprite.classList.add('monster-hit');
+            showDamageText(damage, isCritical);
+            
+            setTimeout(() => {
+                elements.monsterSprite.classList.remove('monster-hit');
+            }, 500);
+            
+            // Update monster display
+            elements.monsterHPText.textContent = `${gameState.currentMonster.currentHP}/${gameState.currentMonster.maxHP}`;
+            elements.monsterHPBar.style.width = `${(gameState.currentMonster.currentHP / gameState.currentMonster.maxHP) * 100}%`;
+            
+            // Check if monster is defeated
+            if (gameState.currentMonster.currentHP <= 0) {
+                defeatMonster();
+            }
+            
+            return {
+                damage,
+                isCritical
+            };
+        }
+
+        function defeatMonster() {
+            // Save monster to defeated list
+            const defeatedMonster = {
+                ...gameState.currentMonster,
+                defeatedDate: formatDate(new Date())
+            };
+            
+            gameState.monstersDefeated.push(defeatedMonster);
+            
+            // Award gold
+            gameState.gold += defeatedMonster.goldReward;
+            
+            // Show message
+            showStatusMessage(`You defeated the ${defeatedMonster.type} and earned ${defeatedMonster.goldReward} gold!`);
+            addToActionLog(`${defeatedMonster.type} defeated! +${defeatedMonster.goldReward} gold`);
+            
+            // Generate new monster
+            gameState.currentMonster = generateMonster();
+            updateMonsterDisplay();
+            updateMonsterLog();
+            updateStats();
+        }
+
+        function monsterAttack() {
+            if (!gameState.currentMonster) return;
+            
+            // Check for Slow trait
+            if (gameState.currentMonster.traits.includes('Slow') && Math.random() < 0.5) {
+                addToActionLog(`${gameState.currentMonster.type} is Slow and missed its attack!`);
+                return;
+            }
+            
+            // Apply monster attack
+            let attackCount = 1;
+            
+            // Check for Swift trait
+            if (gameState.currentMonster.traits.includes('Swift')) {
+                attackCount = 2;
+                addToActionLog(`${gameState.currentMonster.type} is Swift and attacks twice!`);
+            }
+            
+            for (let i = 0; i < attackCount; i++) {
+                // Check for Strong trait
+                let damage = 1;
+                if (gameState.currentMonster.traits.includes('Strong')) {
+                    damage = 2;
+                    addToActionLog(`${gameState.currentMonster.type} is Strong and deals 2 damage!`);
+                }
+                
+                // Check for Venomous trait
+                if (gameState.currentMonster.traits.includes('Venomous') && Math.random() < 0.5) {
+                    gameState.bufferDecayCountdown = Math.max(0, gameState.bufferDecayCountdown - 1);
+                    addToActionLog(`${gameState.currentMonster.type} is Venomous and reduces buffer decay countdown by 1!`);
+                }
+                
+                // Default attack reduces buffer decay countdown
+                gameState.bufferDecayCountdown = Math.max(0, gameState.bufferDecayCountdown - 1);
+                
+                // Strong monsters damage buffer pages
+                if (gameState.currentMonster.traits.includes('Strong')) {
+                    gameState.bufferPages = Math.max(0, gameState.bufferPages - damage);
+                    addToActionLog(`${gameState.currentMonster.type} attacks and reduces your buffer by ${damage} pages!`);
+                } else {
+                    addToActionLog(`${gameState.currentMonster.type} attacks and reduces your buffer decay countdown!`);
+                }
+            }
+            
+            updateStats();
+        }
+
+        function processReading(pages) {
+            // Record reading in history
+            gameState.readingHistory.push({
+                date: formatDate(new Date()),
+                pagesRead: pages,
+                target: gameState.dailyTarget
+            });
+            
+            // Check if daily target was met
+            if (pages >= gameState.dailyTarget) {
+                // Increase streak
+                gameState.streakCounter++;
+                
+                // Calculate excess pages for buffer
+                const excessPages = pages - gameState.dailyTarget;
+                
+                // Add excess pages to buffer
+                if (excessPages > 0) {
+                    const bufferedPages = addBufferPages(excessPages);
+                    
+                    if (bufferedPages > 0) {
+                        addToActionLog(`Added ${bufferedPages} excess pages to your buffer.`);
+                    }
+                }
+                
+                // Check if streak cycle is complete
+                if (gameState.streakCounter >= gameState.streakCycle) {
+                    gameState.completedStreaks++;
+                    gameState.dailyTarget++; // Increase target
+                    gameState.streakCounter = 0; // Reset streak counter
+                    gameState.freePass = gameState.maxFreePass; // Replenish free pass
+                    
+                    addToActionLog(`Streak cycle completed! Target increased to ${gameState.dailyTarget} pages.`);
+                    showStatusMessage(`Congratulations! You completed a streak cycle. Your daily target is now ${gameState.dailyTarget} pages.`);
+                    
+                    // Check if prestige is available
+                    if (gameState.completedStreaks % 5 === 0) {
+                        // Show prestige option
+                        showStatusMessage('You can now PRESTIGE! Check the Settings tab.', 'warning');
+                    }
+                    
+                    // Apply non-prestige bonuses after every 5 streaks
+                    if (!gameState.hasAppliedNonPrestigeBonuses && gameState.completedStreaks % 5 === 0) {
+                        gameState.maxWeeklyBufferUses = 3;
+                        gameState.bufferDecayCountdown = 20;
+                        gameState.hasAppliedNonPrestigeBonuses = true;
+                        
+                        addToActionLog('Non-prestige bonus applied: Weekly buffer uses increased to 3.');
+                        addToActionLog('Non-prestige bonus applied: Buffer decay countdown extended to 20 days.');
+                    }
+                }
+                
+                // Attack monster
+                const attackResult = attackMonster(pages);
+                
+                addToActionLog(`You read ${pages}/${gameState.dailyTarget} pages and dealt ${attackResult.damage} damage to the ${gameState.currentMonster.type}!`);
+                showStatusMessage(`Success! You read ${pages}/${gameState.dailyTarget} pages today.`);
+            } else {
+                // Target not met
+                showStatusMessage(`You didn't reach your daily target of ${gameState.dailyTarget} pages.`, 'warning');
+                addToActionLog(`You read only ${pages}/${gameState.dailyTarget} pages.`);
+                
+                // Show buffer and free pass options
+                if (gameState.bufferPages > 0 && gameState.weeklyBufferUses < gameState.maxWeeklyBufferUses) {
+                    elements.bufferUseContainer.classList.remove('hidden');
+                    elements.useBuffer.textContent = `Use Buffer (${Math.min(gameState.dailyTarget - pages, gameState.bufferPages)} pages available)`;
+                }
+                
+                if (gameState.freePass > 0) {
+                    elements.freePassContainer.classList.remove('hidden');
+                }
+                
+                // Monster attacks if no buffer or free pass is used
+                monsterAttack();
+            }
+            
+            updateStats();
+            updateReadingHistory();
+        }
+
+        // Event listeners
+        elements.logReading.addEventListener('click', () => {
+            const pagesRead = parseInt(elements.pagesRead.value);
+            
+            if (isNaN(pagesRead) || pagesRead < 0) {
+                showStatusMessage('Please enter a valid number of pages.', 'error');
+                return;
+            }
+            
+            // Hide buffer and free pass options
+            elements.bufferUseContainer.classList.add('hidden');
+            elements.freePassContainer.classList.add('hidden');
+            
+            // Process reading
+            processReading(pagesRead);
+            
+            // Reset input
+            elements.pagesRead.value = '';
+        });
+
+        elements.useBuffer.addEventListener('click', () => {
+            const pagesRead = parseInt(elements.pagesRead.value);
+            const pagesNeeded = gameState.dailyTarget - pagesRead;
+            
+            if (pagesNeeded <= 0) return;
+            
+            const pagesFromBuffer = Math.min(pagesNeeded, gameState.bufferPages);
+            
+            if (useBufferPages(pagesFromBuffer)) {
+                gameState.weeklyBufferUses++;
+                
+                addToActionLog(`Used ${pagesFromBuffer} pages from buffer to reach daily target.`);
+                showStatusMessage(`Used ${pagesFromBuffer} pages from your buffer!`);
+                
+                // Hide buffer and free pass options
+                elements.bufferUseContainer.classList.add('hidden');
+                elements.freePassContainer.classList.add('hidden');
+                
+                // Attack monster
+                const attackResult = attackMonster(gameState.dailyTarget);
+                
+                addToActionLog(`You reached your daily target with buffer and dealt ${attackResult.damage} damage to the ${gameState.currentMonster.type}!`);
+                
+                // Update reading history
+                gameState.readingHistory[gameState.readingHistory.length - 1].pagesRead = gameState.dailyTarget;
+                
+                // Increase streak
+                gameState.streakCounter++;
+                
+                // Check if streak cycle is complete
+                if (gameState.streakCounter >= gameState.streakCycle) {
+                    gameState.completedStreaks++;
+                    gameState.dailyTarget++; // Increase target
+                    gameState.streakCounter = 0; // Reset streak counter
+                    gameState.freePass = gameState.maxFreePass; // Replenish free pass
+                    
+                    addToActionLog(`Streak cycle completed! Target increased to ${gameState.dailyTarget} pages.`);
+                    showStatusMessage(`Congratulations! You completed a streak cycle. Your daily target is now ${gameState.dailyTarget} pages.`);
+                }
+                
+                updateStats();
+                updateReadingHistory();
+            }
+        });
+
+        elements.useFreePass.addEventListener('click', () => {
+            if (gameState.freePass <= 0) return;
+            
+            gameState.freePass--;
+            
+            addToActionLog('Used free pass to avoid losing streak.');
+            showStatusMessage('Used free pass to maintain your streak!');
+            
+            // Hide buffer and free pass options
+            elements.bufferUseContainer.classList.add('hidden');
+            elements.freePassContainer.classList.add('hidden');
+            
+            // Increase streak
+            gameState.streakCounter++;
+            
+            // Check if streak cycle is complete
+            if (gameState.streakCounter >= gameState.streakCycle) {
+                gameState.completedStreaks++;
+                gameState.dailyTarget++; // Increase target
+                gameState.streakCounter = 0; // Reset streak counter
+                gameState.freePass = gameState.maxFreePass; // Replenish free pass
+                
+                addToActionLog(`Streak cycle completed! Target increased to ${gameState.dailyTarget} pages.`);
+                showStatusMessage(`Congratulations! You completed a streak cycle. Your daily target is now ${gameState.dailyTarget} pages.`);
+            }
+            
+            updateStats();
+        });
+
+        elements.saveSettings.addEventListener('click', () => {
+            const newDailyTarget = parseInt(elements.dailyTargetSetting.value);
+            const newStreakCycle = parseInt(elements.streakCycleSetting.value);
+            
+            if (isNaN(newDailyTarget) || newDailyTarget < 1) {
+                showStatusMessage('Please enter a valid daily target.', 'error');
+                return;
+            }
+            
+            if (isNaN(newStreakCycle) || newStreakCycle < 1) {
+                showStatusMessage('Please enter a valid streak cycle length.', 'error');
+                return;
+            }
+            
+            gameState.settings.dailyTargetStart = newDailyTarget;
+            gameState.settings.streakCycleLength = newStreakCycle;
+            
+            // Only update current target and cycle if game hasn't started yet
+            if (gameState.readingHistory.length === 0) {
+                gameState.dailyTarget = newDailyTarget;
+                gameState.streakCycle = newStreakCycle;
+                updateStats();
+            }
+            
+            showStatusMessage('Settings saved successfully!');
+        });
+
+        elements.prestigeConfirm.addEventListener('click', () => {
+            const selectedBonus = document.querySelector('input[name="prestige-bonus"]:checked');
+            
+            if (!selectedBonus) {
+                showStatusMessage('Please select a bonus to continue.', 'error');
+                return;
+            }
+            
+            // Apply permanent bonus
+            switch (selectedBonus.value) {
+                case 'max-daily-buffer':
+                    gameState.permanentBonuses.maxDailyBuffer = Math.min(10, gameState.permanentBonuses.maxDailyBuffer + 1);
+                    addToActionLog('Prestige bonus: Max. Daily Buffer +1 page');
+                    break;
+                case 'buffer-pages':
+                    gameState.permanentBonuses.maxBuffer = Math.min(25, gameState.permanentBonuses.maxBuffer + 2);
+                    addToActionLog('Prestige bonus: Buffer Pages +2');
+                    break;
+                case 'buffer-decay':
+                    gameState.permanentBonuses.bufferDecayReduction = Math.min(25, gameState.permanentBonuses.bufferDecayReduction + 5);
+                    addToActionLog('Prestige bonus: Buffer Decay -5%');
+                    break;
+            }
+            
+            // Reset stats
+            gameState.prestigeCount++;
+            gameState.dailyTarget = gameState.settings.dailyTargetStart;
+            gameState.streakCounter = 0;
+            gameState.streakCycle = gameState.settings.streakCycleLength;
+            gameState.freePass = gameState.maxFreePass;
+            gameState.bufferPages = 0;
+            gameState.weeklyBufferUses = 0;
+            gameState.maxWeeklyBufferUses = 2;
+            gameState.bufferDecayCountdown = 14;
+            gameState.completedStreaks = 0;
+            gameState.hasAppliedNonPrestigeBonuses = false;
+            
+            // Generate new monster
+            gameState.currentMonster = generateMonster();
+            
+            showStatusMessage('You have prestiged! All stats have been reset, but you keep your permanent bonus.');
+            addToActionLog(`Prestiged! (Level ${gameState.prestigeCount})`);
+            
+            // Update UI
+            updateMonsterDisplay();
+            updateStats();
+            
+            // Hide prestige options
+            elements.prestigeAvailable.classList.add('hidden');
+            elements.prestigeUnavailable.classList.remove('hidden');
+            
+            // Switch to Daily tab
+            document.getElementById('tab-daily').click();
+        });
+
+        elements.prestigeSkip.addEventListener('click', () => {
+            gameState.hasAppliedNonPrestigeBonuses = true;
+            gameState.maxWeeklyBufferUses = 3;
+            gameState.bufferDecayCountdown = 20;
+            
+            addToActionLog('Non-prestige bonus applied: Weekly buffer uses increased to 3.');
+            addToActionLog('Non-prestige bonus applied: Buffer decay countdown extended to 20 days.');
+            
+            showStatusMessage('You skipped prestige and gained non-prestige bonuses instead.');
+            
+            // Update UI
+            updateStats();
+            
+            // Hide prestige options
+            elements.prestigeAvailable.classList.add('hidden');
+            elements.prestigeUnavailable.classList.remove('hidden');
+            
+            // Switch to Daily tab
+            document.getElementById('tab-daily').click();
+        });
+
+        // Populate shop
+        function populateShop() {
+            const shopContainer = document.querySelector('#content-shop .grid');
+            shopContainer.innerHTML = '';
+            
+            shopItems.forEach(item => {
+                // Check if item is already owned
+                const isOwned = gameState.inventory.some(i => i.name === item.name);
+                
+                const itemCard = document.createElement('div');
+                itemCard.className = 'card bg-white shadow-md rounded-lg p-4 border border-gray-200';
+                
+                itemCard.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-medium">${item.name}</h3>
+                            <p class="text-sm text-gray-600">${item.description}</p>
+                        </div>
+                        <div class="text-amber-500 font-medium">
+                            <i class="fas fa-coins mr-1"></i>${item.cost}
+                        </div>
+                    </div>
+                    <button class="w-full mt-3 ${isOwned ? 'bg-gray-300 cursor-not-allowed' : gameState.gold >= item.cost ? 'bg-primary-600 hover:bg-primary-700' : 'bg-gray-300 cursor-not-allowed'} text-white px-4 py-2 rounded-md" ${isOwned || gameState.gold < item.cost ? 'disabled' : ''} data-item="${item.name}">
+                        ${isOwned ? 'Owned' : 'Buy'}
+                    </button>
+                `;
+                
+                shopContainer.appendChild(itemCard);
+                
+                // Add event listener for buy button
+                if (!isOwned && gameState.gold >= item.cost) {
+                    itemCard.querySelector('button').addEventListener('click', () => {
+                        buyItem(item);
+                    });
+                }
+            });
+        }
+
+        function buyItem(item) {
+            if (gameState.gold < item.cost) {
+                showStatusMessage('Not enough gold!', 'error');
+                return;
+            }
+            
+            // Deduct gold
+            gameState.gold -= item.cost;
+            
+            // Add to inventory
+            gameState.inventory.push({...item});
+            
+            // Handle consumables and equipment
+            if (item.type === 'weapon') {
+                // Equip new weapon
+                gameState.weapon = {...item};
+                elements.weaponDisplay.innerHTML = `<i class="fas ${item.icon} text-primary-600"></i> ${item.name} (${item.damage})`;
+            } else if (item.type === 'consumable') {
+                // Handle consumable effects
+                if (item.effect === 'buffer') {
+                    addBufferPages(item.value);
+                    addToActionLog(`Used ${item.name} and added ${item.value} pages to your buffer.`);
+                } else if (item.effect === 'damage') {
+                    // Implement temporary damage bonus
+                }
+            }
+            
+            showStatusMessage(`You purchased ${item.name}!`);
+            addToActionLog(`Purchased ${item.name} for ${item.cost} gold.`);
+            
+            // Update UI
+            updateInventory();
+            updateStats();
+            populateShop();
+        }
+
+        function updateInventory() {
+            elements.inventory.innerHTML = '';
+            
+            if (gameState.inventory.length === 0) {
+                elements.inventory.innerHTML = `<div class="text-center text-gray-500 py-4">No items in inventory</div>`;
+                return;
+            }
+            
+            // Group items by type
+            const grouped = {};
+            gameState.inventory.forEach(item => {
+                if (!grouped[item.type]) {
+                    grouped[item.type] = [];
+                }
+                grouped[item.type].push(item);
+            });
+            
+            // Display inventory by groups
+            for (const type in grouped) {
+                const groupTitle = document.createElement('div');
+                groupTitle.className = 'font-medium text-sm uppercase text-gray-500 mt-2 mb-1';
+                groupTitle.textContent = type.charAt(0).toUpperCase() + type.slice(1) + 's';
+                elements.inventory.appendChild(groupTitle);
+                
+                grouped[type].forEach(item => {
+                    const itemElement = document.createElement('div');
+                    itemElement.className = 'flex justify-between items-center p-2 border border-gray-200 rounded-md mb-1';
+                    
+                    const isEquipped = item.type === 'weapon' && gameState.weapon.name === item.name;
+                    
+                    itemElement.innerHTML = `
+                        <div class="flex items-center">
+                            <i class="fas ${item.icon} text-primary-600 mr-2"></i>
+                            <div>
+                                <div class="font-medium">${item.name} ${isEquipped ? '<span class="text-xs text-green-600">(equipped)</span>' : ''}</div>
+                                <div class="text-xs text-gray-600">${item.description}</div>
+                            </div>
+                        </div>
+                        ${item.type === 'consumable' ? `<button class="text-xs bg-primary-600 text-white px-2 py-1 rounded-md hover:bg-primary-700" data-use="${item.name}">Use</button>` : ''}
+                    `;
+                    
+                    elements.inventory.appendChild(itemElement);
+                    
+                    // Add event listener for use button
+                    if (item.type === 'consumable') {
+                        itemElement.querySelector('button').addEventListener('click', () => {
+                            useConsumable(item);
+                        });
+                    }
+                });
+            }
+        }
+
+        function useConsumable(item) {
+            // Find and remove item from inventory
+            const index = gameState.inventory.findIndex(i => i.name === item.name);
+            if (index !== -1) {
+                gameState.inventory.splice(index, 1);
+                
+                // Apply consumable effect
+                if (item.effect === 'buffer') {
+                    addBufferPages(item.value);
+                    addToActionLog(`Used ${item.name} and added ${item.value} pages to your buffer.`);
+                    showStatusMessage(`Used ${item.name}! Added ${item.value} pages to your buffer.`);
+                } else if (item.effect === 'damage') {
+                    // Implement temporary damage bonus
+                    addToActionLog(`Used ${item.name}. +${item.value} damage for ${item.duration} days!`);
+                    showStatusMessage(`Used ${item.name}! +${item.value} damage for ${item.duration} days.`);
+                }
+                
+                // Update UI
+                updateInventory();
+                updateStats();
+            }
+        }
+
+        // Initialize game
+        function initGame() {
+            // Set date
+            elements.currentDate.textContent = formatDate(new Date());
+            
+            // Load settings
+            elements.dailyTargetSetting.value = gameState.settings.dailyTargetStart;
+            elements.streakCycleSetting.value = gameState.settings.streakCycleLength;
+            
+            // Generate first monster
+            gameState.currentMonster = generateMonster();
+            updateMonsterDisplay();
+            
+            // Update stats
+            updateStats();
+            
+            // Populate shop
+            populateShop();
+        }
+
+        // Add helper for monster sprite generation
+        function createMonsterSprite(color, text) {
+            return `
+                <div style="background-color: ${color}; width: 100%; height: 100%; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 24px;">
+                    ${text}
+                </div>
+            `;
+        }
+
+        // Initialize the game
+        initGame();
+    </script>
+</body>
+</html>
